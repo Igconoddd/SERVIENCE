@@ -4,47 +4,16 @@
     <meta charset="UTF-8">
     <title>Tienda Virtual</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #fff3e0;
-            text-align: center;
-        }
-        h1, h2 {
-            color: #d35400;
-        }
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-        li {
-            margin: 8px 0;
-        }
-        a {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 15px;
-            background-color: #25D366;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-        input {
-            padding: 8px;
-            margin: 5px 0;
-            width: 200px;
-        }
-        button {
-            padding: 8px 12px;
-            background-color: #d35400;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        #mensaje {
-            margin-top: 10px;
-            color: green;
-        }
+        body { font-family: Arial, sans-serif; background-color: #fff3e0; text-align: center; }
+        h1, h2 { color: #d35400; }
+        ul { list-style: none; padding: 0; }
+        li { margin: 8px 0; }
+        a { display: inline-block; margin-top: 15px; padding: 10px 15px; background-color: #25D366; color: white; text-decoration: none; border-radius: 5px; }
+        input, select { padding: 8px; margin: 5px 0; width: 200px; }
+        button { padding: 8px 12px; background-color: #d35400; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #mensaje { margin-top: 10px; color: green; }
+        #agregarComida { margin-top: 20px; border: 1px solid #d35400; padding: 15px; display: none; }
+        img { max-width: 150px; display: block; margin: 5px auto; }
     </style>
 </head>
 <body>
@@ -60,7 +29,7 @@
 
     <!-- MENÚ -->
     <h2>Menú</h2>
-    <ul>
+    <ul id="menu">
         <li>Hamburguesa – $3</li>
         <li>Hot dog – $2</li>
         <li>Papas fritas – $1.50</li>
@@ -68,34 +37,82 @@
 
     <a href="https://wa.me/59399895861" target="_blank">Pedir por WhatsApp</a>
 
-    <!-- FIREBASE LOGIN SCRIPT -->
+    <!-- AGREGAR COMIDA SOLO PARA ADMIN -->
+    <div id="agregarComida">
+        <h2>Agregar comida</h2>
+        <input type="text" id="nombreComida" placeholder="Nombre del plato" /><br>
+        <input type="text" id="precioComida" placeholder="Precio" /><br>
+        <input type="file" id="fotoComida" accept="image/*" /><br>
+        <button onclick="agregarComida()">Agregar</button>
+    </div>
+
+    <!-- FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDA_-vpUehWqL1WwJxSAKugNoEu6uhbFCM",
             authDomain: "servience-app-505cf.firebaseapp.com",
             projectId: "servience-app-505cf",
-            storageBucket: "servience-app-505cf.firebasestorage.app",
+            storageBucket: "servience-app-505cf.appspot.com",
             messagingSenderId: "267291147632",
             appId: "1:267291147632:web:16abf21019ffee92e6e3b5"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const storage = getStorage(app);
 
+        const adminEmail = "tuCorreoAdmin@gmail.com"; // SOLO este usuario puede agregar comida
+
+        // LOGIN
         window.login = function () {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
 
             signInWithEmailAndPassword(auth, email, password)
                 .then(() => {
-                    document.getElementById("mensaje").innerText = "Login exitoso, ya puedes modificar el menú.";
+                    document.getElementById("mensaje").innerText = "Login exitoso!";
                 })
                 .catch(error => {
                     document.getElementById("mensaje").innerText = "Error: " + error.message;
                 });
+        };
+
+        // Mostrar seccion de agregar comida solo si es admin
+        onAuthStateChanged(auth, user => {
+            if (user && user.email === adminEmail) {
+                document.getElementById("agregarComida").style.display = "block";
+            } else {
+                document.getElementById("agregarComida").style.display = "none";
+            }
+        });
+
+        // FUNCION AGREGAR COMIDA
+        window.agregarComida = async function () {
+            const nombre = document.getElementById("nombreComida").value;
+            const precio = document.getElementById("precioComida").value;
+            const foto = document.getElementById("fotoComida").files[0];
+
+            if (!nombre || !precio || !foto) {
+                alert("Completa todos los campos");
+                return;
+            }
+
+            const storageRef = ref(storage, "comidas/" + foto.name);
+            await uploadBytes(storageRef, foto);
+            const url = await getDownloadURL(storageRef);
+
+            const li = document.createElement("li");
+            li.innerHTML = `${nombre} - $${precio} <br><img src="${url}" alt="${nombre}" />`;
+            document.getElementById("menu").appendChild(li);
+
+            // Limpiar campos
+            document.getElementById("nombreComida").value = "";
+            document.getElementById("precioComida").value = "";
+            document.getElementById("fotoComida").value = "";
         };
     </script>
 </body>
