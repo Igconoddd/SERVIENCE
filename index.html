@@ -9,7 +9,7 @@
             background-color: #fff3e0;
             text-align: center;
         }
-        h1 {
+        h1, h2 {
             color: #d35400;
         }
         ul {
@@ -28,17 +28,75 @@
             text-decoration: none;
             border-radius: 5px;
         }
+        input {
+            padding: 8px;
+            margin: 5px 0;
+            width: 200px;
+        }
+        button {
+            padding: 8px 12px;
+            background-color: #d35400;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #mensaje {
+            margin-top: 10px;
+            color: green;
+        }
     </style>
 </head>
 <body>
     <h1>Tienda Virtual</h1>
     <p>Bienvenidos a nuestra tienda de comida</p>
+
+    <!-- LOGIN -->
+    <h2>Iniciar sesión</h2>
+    <input type="email" id="email" placeholder="Correo" /><br>
+    <input type="password" id="password" placeholder="Contraseña" /><br>
+    <button onclick="login()">Entrar</button>
+    <p id="mensaje"></p>
+
+    <!-- MENÚ -->
     <h2>Menú</h2>
     <ul>
         <li>Hamburguesa – $3</li>
         <li>Hot dog – $2</li>
         <li>Papas fritas – $1.50</li>
     </ul>
+
     <a href="https://wa.me/59399895861" target="_blank">Pedir por WhatsApp</a>
+
+    <!-- FIREBASE LOGIN SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDA_-vpUehWqL1WwJxSAKugNoEu6uhbFCM",
+            authDomain: "servience-app-505cf.firebaseapp.com",
+            projectId: "servience-app-505cf",
+            storageBucket: "servience-app-505cf.firebasestorage.app",
+            messagingSenderId: "267291147632",
+            appId: "1:267291147632:web:16abf21019ffee92e6e3b5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        window.login = function () {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then(() => {
+                    document.getElementById("mensaje").innerText = "Login exitoso, ya puedes modificar el menú.";
+                })
+                .catch(error => {
+                    document.getElementById("mensaje").innerText = "Error: " + error.message;
+                });
+        };
+    </script>
 </body>
 </html>
